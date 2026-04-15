@@ -1,0 +1,1678 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoLog — Registro de Combustible</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500;600;700;800;900&family=Barlow:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F2EFE9;
+    --surface: #FAFAF8;
+    --surface2: #EEEBE4;
+    --border: #D8D3C8;
+    --border-strong: #B8B0A0;
+    --ink: #1A1814;
+    --ink2: #3A3630;
+    --muted: #8A8278;
+    --accent: #E8450A;
+    --accent-dim: #F2D4C8;
+    --accent2: #1A1814;
+    --green: #2D6A4F;
+    --card-radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Barlow', sans-serif;
+    font-weight: 400;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* ---- HEADER ---- */
+  .app-header {
+    padding: 24px 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+    margin-bottom: 0;
+  }
+  .logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 28px;
+    letter-spacing: -0.5px;
+    text-transform: uppercase;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .logo span { color: var(--accent); }
+  .header-sub {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 3px;
+    letter-spacing: 0.5px;
+  }
+  .car-badge {
+    background: var(--ink);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--bg);
+    display: flex; align-items: center; gap: 6px;
+    font-weight: 500;
+  }
+
+  /* ---- TABS ---- */
+
+  /* ---- PAGES ---- */
+  .page { display: none; padding: 20px 20px 110px; animation: fadeIn 0.18s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  /* ---- DASHBOARD ---- */
+  .main-metric {
+    background: var(--ink);
+    border-radius: var(--card-radius);
+    padding: 20px 22px;
+    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .main-metric::after {
+    content: '';
+    position: absolute;
+    bottom: -20px; right: -20px;
+    width: 120px; height: 120px;
+    border: 30px solid rgba(255,255,255,0.04);
+    border-radius: 50%;
+  }
+  .metric-label {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .metric-value {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 64px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+    margin: 4px 0 2px;
+    letter-spacing: -1px;
+  }
+  .metric-unit {
+    font-size: 12px;
+    color: rgba(255,255,255,0.45);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+  .metric-sub { font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 10px; font-family: 'Barlow', sans-serif; }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 14px 16px;
+  }
+  .stat-card .s-label {
+    font-size: 9px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .stat-card .s-val {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.3px;
+    line-height: 1;
+  }
+  .stat-card .s-unit { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .stat-card.blue .s-val { color: var(--ink); }
+  .stat-card.orange .s-val { color: var(--accent); }
+  .stat-card.green .s-val { color: var(--green); }
+  .stat-card.purple .s-val { color: var(--ink); }
+
+  .section-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 10px;
+    margin: 20px 0 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Charts */
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 18px;
+    margin-bottom: 10px;
+  }
+  .chart-title {
+    font-size: 9px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 14px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .chart-bars { display: flex; align-items: flex-end; gap: 5px; height: 70px; }
+  .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; height: 100%; justify-content: flex-end; }
+  .bar {
+    width: 100%;
+    border-radius: 3px 3px 0 0;
+    background: var(--ink);
+    opacity: 0.15;
+    transition: opacity 0.2s;
+    min-height: 3px;
+  }
+  .bar:hover { opacity: 0.4; }
+  .bar.accent2 { background: var(--accent); opacity: 0.6; }
+  .bar-lbl { font-size: 8px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+  /* ---- HISTORY ---- */
+  .fill-entry {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+  }
+  .fill-entry:active { background: var(--surface2); }
+  .fill-entry::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 20%; bottom: 20%;
+    width: 3px;
+    background: var(--accent);
+    border-radius: 0 2px 2px 0;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .fill-entry:hover::before { opacity: 1; }
+  .fill-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .fill-info { flex: 1; min-width: 0; }
+  .fill-date { font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 2px; }
+  .fill-main { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 18px; color: var(--ink); letter-spacing: -0.2px; }
+  .fill-detail { font-size: 11px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fill-cost { text-align: right; flex-shrink: 0; }
+  .fill-cost .amount { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 18px; color: var(--accent); letter-spacing: -0.2px; }
+  .fill-cost .per-liter { font-size: 9px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+  /* empty state */
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-state .e-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
+  .empty-state p { font-size: 14px; line-height: 1.7; }
+
+  /* ---- STATS PAGE ---- */
+  .wide-stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 14px 18px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .wide-stat .ws-label { font-size: 13px; color: var(--ink2); font-weight: 400; }
+  .wide-stat .ws-val { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px; color: var(--ink); letter-spacing: -0.2px; }
+  .wide-stat.accent .ws-val { color: var(--accent); }
+  .wide-stat.blue .ws-val { color: var(--ink); }
+  .wide-stat.orange .ws-val { color: var(--accent); }
+
+  /* ---- FAB ---- */
+  .fab {
+    position: fixed;
+    bottom: 88px;
+    left: 50%;
+    transform: translateX(-50%) translateX(155px);
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    font-size: 26px;
+    font-weight: 300;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(232,69,10,0.35);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+    z-index: 100;
+  }
+  .fab:hover { transform: translateX(-50%) translateX(155px) scale(1.06); box-shadow: 0 6px 28px rgba(232,69,10,0.45); }
+  @media (max-width: 480px) {
+    .fab { transform: translateX(-50%) translateX(170px); }
+    .fab:hover { transform: translateX(-50%) translateX(170px) scale(1.06); }
+  }
+
+  /* ---- BOTTOM NAV ---- */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 480px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding: 10px 0 22px;
+    z-index: 99;
+  }
+  .nav-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 10px;
+    font-family: 'Barlow', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 4px;
+    transition: color 0.15s;
+    letter-spacing: 0.3px;
+  }
+  .nav-btn.active { color: var(--accent); }
+  .nav-btn .ni { font-size: 18px; }
+
+  /* ---- MODAL ---- */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(26,24,20,0.6);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    border-top: 1px solid var(--border);
+    width: 100%; max-width: 480px;
+    padding: 0 20px 40px;
+    max-height: 93vh;
+    overflow-y: auto;
+    animation: slideUp 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle {
+    width: 36px; height: 3px;
+    background: var(--border-strong);
+    border-radius: 2px;
+    margin: 14px auto 22px;
+  }
+  .modal-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 26px;
+    margin-bottom: 4px;
+    letter-spacing: -0.3px;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 22px; font-family: 'JetBrains Mono', monospace; }
+
+  /* Form */
+  .form-section-title {
+    font-size: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin: 20px 0 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .form-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .form-group { margin-bottom: 10px; }
+  .form-group.full { grid-column: 1/-1; }
+  label {
+    display: block;
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  .input-wrap { position: relative; }
+  .input-wrap .unit-badge {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono', monospace;
+    pointer-events: none;
+  }
+  input[type="number"], input[type="date"], input[type="text"], select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--ink);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    padding: 11px 36px 11px 13px;
+    outline: none;
+    transition: border-color 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus { border-color: var(--ink); }
+  input.auto-filled { border-color: var(--accent); background: #fdf3ef; color: var(--accent); }
+  .auto-indicator {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: none;
+  }
+  input.auto-filled ~ .auto-indicator { display: block; }
+  input.auto-filled { padding-left: 24px; }
+
+  .calc-hint {
+    font-size: 9px;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 3px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .calc-hint.show { opacity: 1; }
+
+  .full-tank-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .toggle-label { font-size: 13px; font-weight: 500; }
+  .toggle {
+    width: 42px; height: 22px;
+    background: var(--border-strong);
+    border-radius: 11px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    border: none;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--accent); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 16px; height: 16px;
+    background: white;
+    border-radius: 50%;
+    top: 3px; left: 3px;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  .toggle.on::after { transform: translateX(20px); }
+
+  .btn-submit {
+    width: 100%;
+    background: var(--ink);
+    color: var(--bg);
+    border: none;
+    border-radius: 8px;
+    padding: 15px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 18px;
+    transition: opacity 0.15s, transform 0.12s;
+  }
+  .btn-submit:hover { opacity: 0.85; }
+  .btn-submit:active { transform: scale(0.98); }
+  .btn-cancel {
+    width: 100%;
+    background: transparent;
+    color: var(--muted);
+    border: none;
+    padding: 14px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+
+  /* toast */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%; transform: translateX(-50%) translateY(-80px);
+    background: var(--ink);
+    color: var(--bg);
+    padding: 11px 22px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    z-index: 999;
+    transition: transform 0.25s cubic-bezier(0.32,0.72,0,1);
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* detail modal rows */
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-label { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+  .detail-val { font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 17px; color: var(--ink); }
+
+  .delete-btn {
+    width: 100%;
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 13px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 14px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .delete-btn:hover { background: var(--accent); color: white; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+
+  select option { background: var(--surface); color: var(--ink); }
+</style>
+
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="app-header">
+  <div>
+    <div class="logo">Auto<span>Log</span></div>
+    <div class="header-sub">REGISTRO DE COMBUSTIBLE</div>
+  </div>
+  <div class="car-badge">🚗 <span id="car-name">Mi Carro</span></div>
+</div>
+
+<!-- TAB BAR -->
+
+<!-- PAGES -->
+<div id="page-dashboard" class="page active">
+  <div class="main-metric">
+    <div class="metric-label">⛽ CONSUMO PROMEDIO</div>
+    <div class="metric-value" id="avg-consumption">—</div>
+    <div class="metric-unit">L / 100 km</div>
+    <div class="metric-sub" id="avg-sub">Agrega al menos 2 registros para calcular</div>
+  </div>
+
+  <div class="main-metric" style="background: var(--ink); border-radius: var(--card-radius);">
+    <div class="metric-label">🛣 KM POR DÍA</div>
+    <div class="metric-value" id="km-per-day">—</div>
+    <div class="metric-unit">km / día</div>
+    <div class="metric-sub" id="km-per-day-sub">Agrega al menos 2 registros para calcular</div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:10px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div>
+        <div class="metric-label">💸 GASTO MENSUAL</div>
+        <div id="monthly-total" style="font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:28px; color:var(--ink); line-height:1; margin-top:4px; letter-spacing:-0.5px;">—</div>
+        <div style="font-size:10px; color:var(--muted); font-family:'JetBrains Mono',monospace; margin-top:2px;" id="monthly-label">últimos 8 meses</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:9px; color:var(--muted); font-family:'JetBrains Mono',monospace; letter-spacing:1px;">PROMEDIO/MES</div>
+        <div id="monthly-avg" style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:20px; color:var(--accent); letter-spacing:-0.3px;">—</div>
+      </div>
+    </div>
+    <div class="chart-bars" id="monthly-chart" style="height:100px; align-items:flex-end;">
+      <div style="color:var(--muted);font-size:12px;width:100%;text-align:center;padding-top:30px;">Sin datos</div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card green">
+      <div class="s-label">Total Litros</div>
+      <div class="s-val" id="total-liters">0</div>
+      <div class="s-unit">litros llenados</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="s-label">Gasto Total</div>
+      <div class="s-val" id="total-cost">₡0</div>
+      <div class="s-unit">gastado</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="s-label">Km Recorridos</div>
+      <div class="s-val" id="total-km">0</div>
+      <div class="s-unit">kilómetros</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="s-label">Registros</div>
+      <div class="s-val" id="total-fills">0</div>
+      <div class="s-unit">visitas a gasolinera</div>
+    </div>
+  </div>
+
+  <div class="section-title">Últimas cargas</div>
+  <div class="chart-card">
+    <div class="chart-title">KM ENTRE CARGAS — ÚLTIMAS 10</div>
+    <div class="chart-bars" id="mini-chart" style="height:90px;">
+      <div style="color:var(--muted);font-size:12px;width:100%;text-align:center;padding-top:20px;">Sin datos</div>
+    </div>
+  </div>
+
+  <div id="recent-list"></div>
+</div>
+
+<div id="page-history" class="page">
+  <div class="section-title">Historial completo</div>
+  <div id="history-list">
+    <div class="empty-state">
+      <div class="e-icon">⛽</div>
+      <p>Aún no tienes registros.<br>Presiona <strong>+</strong> para agregar tu primera carga.</p>
+    </div>
+  </div>
+</div>
+
+<div id="page-stats" class="page">
+  <div class="section-title">Estadísticas</div>
+
+  <div class="wide-stat accent">
+    <span class="ws-label">🏆 Mejor consumo</span>
+    <span class="ws-val" id="best-consumption">—</span>
+  </div>
+  <div class="wide-stat">
+    <span class="ws-label">📉 Peor consumo</span>
+    <span class="ws-val" id="worst-consumption">—</span>
+  </div>
+  <div class="wide-stat blue">
+    <span class="ws-label">💧 Promedio L por carga</span>
+    <span class="ws-val" id="avg-per-fill">—</span>
+  </div>
+  <div class="wide-stat orange">
+    <span class="ws-label">💰 Costo promedio por carga</span>
+    <span class="ws-val" id="avg-cost-fill">—</span>
+  </div>
+  <div class="wide-stat">
+    <span class="ws-label">⛽ Precio promedio por litro</span>
+    <span class="ws-val" id="avg-price-liter">—</span>
+  </div>
+  <div class="wide-stat">
+    <span class="ws-label">📏 Km promedio entre cargas</span>
+    <span class="ws-val" id="avg-km-fill">—</span>
+  </div>
+  <div class="wide-stat accent">
+    <span class="ws-label">💸 Costo por km</span>
+    <span class="ws-val" id="cost-per-km">—</span>
+  </div>
+</div>
+
+<div id="page-settings" class="page">
+  <div class="section-title">Vehículo</div>
+  <div class="form-group">
+    <label>Nombre del carro</label>
+    <div class="input-wrap">
+      <input type="text" id="setting-carname" placeholder="Ej: Toyota Corolla 2020" oninput="saveSetting('carName', this.value); document.getElementById('car-name').textContent = this.value || 'Mi Carro'">
+    </div>
+  </div>
+  <div class="form-group">
+    <label>Moneda</label>
+    <div class="input-wrap">
+      <select id="setting-currency" onchange="saveSetting('currency', this.value); refreshAll()">
+        <option value="₡">₡ Colón (CRC)</option>
+        <option value="$">$ Dólar (USD)</option>
+        <option value="€">€ Euro (EUR)</option>
+        <option value="Q">Q Quetzal (GTQ)</option>
+        <option value="L">L Lempira (HNL)</option>
+        <option value="C$">C$ Córdoba (NIO)</option>
+        <option value="B/.">B/. Balboa (PAB)</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-group">
+    <label>Tipo de combustible</label>
+    <div class="input-wrap">
+      <select id="setting-fueltype" onchange="saveSetting('fuelType', this.value)">
+        <option value="Regular">Regular</option>
+        <option value="Super">Super</option>
+        <option value="Diesel">Diesel</option>
+        <option value="Premium">Premium</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-group">
+    <label>Capacidad del tanque (litros)</label>
+    <div class="input-wrap">
+      <input type="number" id="setting-tanksize" placeholder="45" oninput="saveSetting('tankSize', this.value)">
+      <span class="unit-badge">L</span>
+    </div>
+  </div>
+
+  <div class="section-title">Exportar</div>
+  <button class="btn-submit" style="background:var(--ink);margin-bottom:10px;" onclick="openExportModal()">📤 Exportar datos (JSON)</button>
+
+  <div class="section-title">Importar</div>
+  <button class="btn-submit" style="margin-top:0;margin-bottom:10px;" onclick="openImportModal()">📥 Importar respaldo (JSON)</button>
+
+  <div class="section-title">Peligro</div>
+  <button class="delete-btn" id="btn-delete-all" onclick="confirmDeleteAll()">
+    🗑️ Borrar todos los registros
+  </button>
+</div>
+
+<!-- MODAL: Importar -->
+<div class="modal-overlay" id="modal-import">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📥 Importar datos</div>
+    <div class="modal-sub">Pega el contenido completo del JSON exportado</div>
+
+    <div id="import-status" style="display:none;padding:10px 14px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:12px;margin-bottom:12px;"></div>
+
+    <textarea id="import-textarea"
+      placeholder='{ "saves": [...], "settings": {...} }'
+      oninput="importPreview()"
+      style="width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;
+             color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:11px;
+             padding:14px;height:180px;resize:none;outline:none;line-height:1.6;
+             transition:border-color 0.2s;"
+    ></textarea>
+
+    <div id="import-preview" style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:8px;min-height:18px;"></div>
+
+    <button class="btn-submit" id="import-confirm-btn" onclick="doImport()" disabled
+      style="opacity:0.4;cursor:not-allowed;">
+      Confirmar importación
+    </button>
+    <button class="btn-cancel" onclick="closeImportModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL: Exportar -->
+<div class="modal-overlay" id="modal-export">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📤 Exportar datos</div>
+    <div class="modal-sub" id="export-summary"></div>
+
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button id="export-btn-copy" class="btn-submit" style="flex:1;margin-top:0;background:var(--accent2);font-size:13px;padding:12px 8px;" onclick="exportCopy()">📋 Copiar</button>
+      <button id="export-btn-select" class="btn-submit" style="flex:1;margin-top:0;background:transparent;color:var(--ink);border:1px solid var(--border);font-size:13px;padding:12px 8px;" onclick="exportSelectAll()">🖱️ Seleccionar todo</button>
+    </div>
+
+    <div style="position:relative;">
+      <textarea id="export-textarea" readonly
+        style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:10px;padding:12px;height:220px;resize:none;outline:none;line-height:1.5;"
+      ></textarea>
+    </div>
+
+    <button class="btn-cancel" onclick="closeExportModal()">Cerrar</button>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab" onclick="openModal()" title="Nueva carga">+</button>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="nav-btn active" id="nav-dashboard" onclick="showPage('dashboard')">
+    <span class="ni">📊</span>Dashboard
+  </button>
+  <button class="nav-btn" id="nav-history" onclick="showPage('history')">
+    <span class="ni">📋</span>Historial
+  </button>
+  <button class="nav-btn" id="nav-stats" onclick="showPage('stats')">
+    <span class="ni">📈</span>Stats
+  </button>
+  <button class="nav-btn" id="nav-settings" onclick="showPage('settings')">
+    <span class="ni">⚙️</span>Ajustes
+  </button>
+</div>
+
+<!-- MODAL: Nueva Carga -->
+<div class="modal-overlay" id="modal-add">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⛽ Nueva Carga</div>
+    <div class="modal-sub">Los campos en <span style="color:var(--accent)">azul</span> se calculan automáticamente</div>
+
+    <div class="form-section-title">📅 Fecha y Kilometraje</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Fecha</label>
+        <div class="input-wrap">
+          <input type="date" id="f-date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Odómetro (km)</label>
+        <div class="input-wrap">
+          <input type="number" id="f-odometer" placeholder="0" oninput="autoCalc()">
+          <span class="unit-badge">km</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section-title">💰 Combustible</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Precio por litro</label>
+        <div class="input-wrap">
+          <input type="number" id="f-price-per-liter" placeholder="0" step="0.01" oninput="autoCalc('ppl')">
+          <span class="unit-badge" id="badge-ppl">₡/L</span>
+        </div>
+        <div class="calc-hint" id="hint-ppl">Calculado automáticamente</div>
+      </div>
+      <div class="form-group">
+        <label>Total pagado</label>
+        <div class="input-wrap">
+          <input type="number" id="f-total-cost" placeholder="0" step="0.01" oninput="autoCalc('total')">
+          <span class="unit-badge" id="badge-cost">₡</span>
+        </div>
+        <div class="calc-hint" id="hint-total">Calculado automáticamente</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Litros cargados</label>
+      <div class="input-wrap">
+        <input type="number" id="f-liters" placeholder="0.00" step="0.01" oninput="autoCalc('liters')">
+        <div class="auto-indicator"></div>
+        <span class="unit-badge">L</span>
+      </div>
+      <div class="calc-hint" id="hint-liters">Calculado automáticamente</div>
+    </div>
+
+    <div class="full-tank-toggle">
+      <div>
+        <div class="toggle-label">🔋 Tanque lleno</div>
+        <div style="font-size:11px;color:var(--muted);">¿Llenaste el tanque completo?</div>
+      </div>
+      <button class="toggle" id="toggle-full" onclick="this.classList.toggle('on')"></button>
+    </div>
+
+    <div class="form-section-title">📝 Información adicional</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Gasolinera</label>
+        <div class="input-wrap">
+          <input type="text" id="f-station" placeholder="Nombre (opcional)">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Tipo combustible</label>
+        <div class="input-wrap">
+          <select id="f-fueltype">
+            <option>Regular</option>
+            <option>Super</option>
+            <option>Diesel</option>
+            <option>Premium</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="form-group full">
+      <label>Notas</label>
+      <div class="input-wrap">
+        <input type="text" id="f-notes" placeholder="Notas adicionales (opcional)">
+        <span class="unit-badge" style="right:8px">📝</span>
+      </div>
+    </div>
+
+    <button class="btn-submit" onclick="saveEntry()">Guardar Carga ✓</button>
+    <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL: Detalle / Editar -->
+<div class="modal-overlay" id="modal-detail">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">✏️ Editar Carga</div>
+    <div class="modal-sub" id="detail-consumption-badge"></div>
+
+    <div class="form-section-title">📅 Fecha y Kilometraje</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Fecha</label>
+        <div class="input-wrap">
+          <input type="date" id="e-date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Odómetro (km)</label>
+        <div class="input-wrap">
+          <input type="number" id="e-odometer" placeholder="0" oninput="autoCalcEdit()">
+          <span class="unit-badge">km</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section-title">💰 Combustible</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Precio por litro</label>
+        <div class="input-wrap">
+          <input type="number" id="e-price-per-liter" placeholder="0" step="0.01" oninput="autoCalcEdit('ppl')">
+          <span class="unit-badge" id="e-badge-ppl">₡/L</span>
+        </div>
+        <div class="calc-hint" id="e-hint-ppl">Calculado automáticamente</div>
+      </div>
+      <div class="form-group">
+        <label>Total pagado</label>
+        <div class="input-wrap">
+          <input type="number" id="e-total-cost" placeholder="0" step="0.01" oninput="autoCalcEdit('total')">
+          <span class="unit-badge" id="e-badge-cost">₡</span>
+        </div>
+        <div class="calc-hint" id="e-hint-total">Calculado automáticamente</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Litros cargados</label>
+      <div class="input-wrap">
+        <input type="number" id="e-liters" placeholder="0.00" step="0.01" oninput="autoCalcEdit('liters')">
+        <div class="auto-indicator"></div>
+        <span class="unit-badge">L</span>
+      </div>
+      <div class="calc-hint" id="e-hint-liters">Calculado automáticamente</div>
+    </div>
+
+    <div class="full-tank-toggle">
+      <div>
+        <div class="toggle-label">🔋 Tanque lleno</div>
+        <div style="font-size:11px;color:var(--muted);">¿Llenaste el tanque completo?</div>
+      </div>
+      <button class="toggle" id="e-toggle-full" onclick="this.classList.toggle('on')"></button>
+    </div>
+
+    <div class="form-section-title">📝 Información adicional</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Gasolinera</label>
+        <div class="input-wrap">
+          <input type="text" id="e-station" placeholder="Nombre (opcional)">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Tipo combustible</label>
+        <div class="input-wrap">
+          <select id="e-fueltype">
+            <option>Regular</option>
+            <option>Super</option>
+            <option>Diesel</option>
+            <option>Premium</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="form-group full">
+      <label>Notas</label>
+      <div class="input-wrap">
+        <input type="text" id="e-notes" placeholder="Notas adicionales (opcional)">
+        <span class="unit-badge" style="right:8px">📝</span>
+      </div>
+    </div>
+
+    <button class="btn-submit" onclick="saveEdit()">Guardar Cambios ✓</button>
+    <button class="delete-btn" id="detail-delete-btn">🗑️ Eliminar este registro</button>
+    <button class="btn-cancel" onclick="closeDetailModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✓ Guardado correctamente</div>
+
+<script>
+// ---- STATE ----
+let saves = [];
+let settings = { carName: 'Mi Carro', currency: '₡', fuelType: 'Regular', tankSize: 45 };
+let detailIdx = null;
+
+// ---- STORAGE: try localStorage, fallback to memory ----
+// Data is always exportable/importable via JSON file as the primary backup mechanism
+
+function persistFills() {
+  try { localStorage.setItem('autolog_fills', JSON.stringify(saves)); } catch(e) {}
+}
+function persistSettings() {
+  try { localStorage.setItem('autolog_settings', JSON.stringify(settings)); } catch(e) {}
+}
+
+// ---- LOAD ----
+function loadData() {
+  try {
+    const f = localStorage.getItem('autolog_fills');
+    if (f) {
+      const parsed = JSON.parse(f);
+      if (Array.isArray(parsed) && parsed.length) saves = parsed.sort((a,b) => new Date(a.date) - new Date(b.date));
+    }
+  } catch(e) {}
+  try {
+    const s = localStorage.getItem('autolog_settings');
+    if (s) settings = { ...settings, ...JSON.parse(s) };
+  } catch(e) {}
+  applySettings();
+  refreshAll();
+}
+
+function applySettings() {
+  document.getElementById('car-name').textContent = settings.carName || 'Mi Carro';
+  document.getElementById('setting-carname').value = settings.carName || '';
+  document.getElementById('setting-currency').value = settings.currency || '₡';
+  document.getElementById('setting-fueltype').value = settings.fuelType || 'Regular';
+  document.getElementById('setting-tanksize').value = settings.tankSize || '';
+  updateCurrencyBadges();
+}
+
+function saveSetting(key, val) {
+  settings[key] = val;
+  persistSettings();
+  updateCurrencyBadges();
+}
+
+function updateCurrencyBadges() {
+  const c = settings.currency || '₡';
+  document.getElementById('badge-ppl').textContent = c + '/L';
+  document.getElementById('badge-cost').textContent = c;
+}
+
+// ---- NAVIGATION ----
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const tabs = ['dashboard','history','stats','settings'];
+  const navEls = document.querySelectorAll('.nav-btn');
+  const idx = tabs.indexOf(name);
+  if (idx >= 0) { navEls[idx].classList.add('active'); }
+}
+
+// ---- MODAL ----
+function openModal() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('f-date').value = today;
+  document.getElementById('f-price-per-liter').value = '';
+  document.getElementById('f-total-cost').value = '';
+  document.getElementById('f-liters').value = '';
+  document.getElementById('f-odometer').value = '';
+  document.getElementById('f-station').value = '';
+  document.getElementById('f-notes').value = '';
+
+  // Default fuel type = last entry's fuel type, else settings default
+  const lastFuelType = saves.length > 0 ? saves[saves.length - 1].fuelType : (settings.fuelType || 'Regular');
+  document.getElementById('f-fueltype').value = lastFuelType;
+
+  document.getElementById('toggle-full').className = 'toggle on';
+  ['f-price-per-liter','f-total-cost','f-liters'].forEach(id => document.getElementById(id).classList.remove('auto-filled'));
+  ['hint-ppl','hint-total','hint-liters'].forEach(id => document.getElementById(id).classList.remove('show'));
+
+  // Pre-fill last odometer placeholder
+  if (saves.length > 0) {
+    const last = saves[saves.length - 1];
+    document.getElementById('f-odometer').placeholder = 'Último: ' + last.odometer;
+  }
+  manualFields.clear();
+  document.getElementById('modal-add').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-add').classList.remove('open'); }
+function closeDetailModal() { document.getElementById('modal-detail').classList.remove('open'); }
+
+// ---- AUTO CALC (3-way) ----
+// Track which fields the user has manually typed into
+const manualFields = new Set(); // 'ppl' | 'total' | 'liters'
+
+function autoCalc(field) {
+  if (field) {
+    // If the user clears a field, remove it from manual set
+    const idMap = { ppl: 'f-price-per-liter', total: 'f-total-cost', liters: 'f-liters' };
+    const raw = document.getElementById(idMap[field]).value;
+    if (raw === '' || raw === null) {
+      manualFields.delete(field);
+    } else {
+      manualFields.add(field);
+    }
+  }
+
+  // Read values ONLY from manually-edited fields
+  const pplRaw   = manualFields.has('ppl')    ? parseFloat(document.getElementById('f-price-per-liter').value) : NaN;
+  const totalRaw = manualFields.has('total')  ? parseFloat(document.getElementById('f-total-cost').value)      : NaN;
+  const litersRaw= manualFields.has('liters') ? parseFloat(document.getElementById('f-liters').value)          : NaN;
+
+  const hasPpl    = !isNaN(pplRaw)    && pplRaw    > 0;
+  const hasTotal  = !isNaN(totalRaw)  && totalRaw  > 0;
+  const hasLiters = !isNaN(litersRaw) && litersRaw > 0;
+
+  // Clear auto-fill states first
+  ['f-price-per-liter','f-total-cost','f-liters'].forEach(id => {
+    document.getElementById(id).classList.remove('auto-filled');
+  });
+  ['hint-ppl','hint-total','hint-liters'].forEach(id => {
+    document.getElementById(id).classList.remove('show');
+  });
+
+  if (hasPpl && hasTotal && !hasLiters) {
+    // calc liters = total / ppl
+    const calc = (totalRaw / pplRaw).toFixed(2);
+    document.getElementById('f-liters').value = calc;
+    document.getElementById('f-liters').classList.add('auto-filled');
+    document.getElementById('hint-liters').classList.add('show');
+    document.getElementById('hint-liters').textContent = `= ${totalRaw} ÷ ${pplRaw}`;
+
+  } else if (hasPpl && hasLiters && !hasTotal) {
+    // calc total = ppl * liters
+    const calc = (pplRaw * litersRaw).toFixed(2);
+    document.getElementById('f-total-cost').value = calc;
+    document.getElementById('f-total-cost').classList.add('auto-filled');
+    document.getElementById('hint-total').classList.add('show');
+    document.getElementById('hint-total').textContent = `= ${pplRaw} × ${litersRaw}`;
+
+  } else if (hasTotal && hasLiters && !hasPpl) {
+    // calc ppl = total / liters
+    const calc = (totalRaw / litersRaw).toFixed(2);
+    document.getElementById('f-price-per-liter').value = calc;
+    document.getElementById('f-price-per-liter').classList.add('auto-filled');
+    document.getElementById('hint-ppl').classList.add('show');
+    document.getElementById('hint-ppl').textContent = `= ${totalRaw} ÷ ${litersRaw}`;
+  }
+}
+
+// ---- SAVE ----
+function saveEntry() {
+  const date = document.getElementById('f-date').value;
+  const odometer = parseFloat(document.getElementById('f-odometer').value);
+  const ppl = parseFloat(document.getElementById('f-price-per-liter').value);
+  const total = parseFloat(document.getElementById('f-total-cost').value);
+  const liters = parseFloat(document.getElementById('f-liters').value);
+
+  if (!date || !odometer || !liters || !total) {
+    alert('Por favor completa: Fecha, Odómetro, Litros y Total pagado.');
+    return;
+  }
+
+  const entry = {
+    id: Date.now(),
+    date,
+    odometer,
+    pricePerLiter: ppl || (total / liters),
+    totalCost: total,
+    liters,
+    fullTank: document.getElementById('toggle-full').classList.contains('on'),
+    station: document.getElementById('f-station').value,
+    fuelType: document.getElementById('f-fueltype').value,
+    notes: document.getElementById('f-notes').value
+  };
+
+  saves.push(entry);
+  saves.sort((a,b) => new Date(a.date) - new Date(b.date));
+  persistFills();
+
+  closeModal();
+  refreshAll();
+  showToast('✓ Carga registrada correctamente');
+  manualFields.clear();
+}
+
+function deleteEntry(idx) {
+  saves.splice(idx, 1);
+  persistFills();
+  closeDetailModal();
+  refreshAll();
+  showToast('🗑️ Registro eliminado');
+}
+
+// ---- TOAST ----
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ---- DETAIL / EDIT ----
+let editIdx = null;
+const editManualFields = new Set();
+
+function showDetail(idx) {
+  editIdx = idx;
+  editManualFields.clear();
+  const e = saves[idx];
+  const c = settings.currency || '₡';
+  const prev = idx > 0 ? saves[idx - 1] : null;
+  const km = prev ? (e.odometer - prev.odometer) : null;
+  const consumption = (prev && km > 0 && e.fullTank) ? ((e.liters / km) * 100).toFixed(2) : null;
+
+  // Consumption badge
+  const badge = document.getElementById('detail-consumption-badge');
+  if (consumption) {
+    badge.innerHTML = `Consumo: <span style="color:var(--accent);font-weight:700;font-family:'Barlow Condensed',sans-serif;font-size:18px;">${consumption} L/100km</span>${km ? ` · ${km.toLocaleString()} km recorridos` : ''}`;
+  } else {
+    badge.textContent = km ? `${km.toLocaleString()} km desde carga anterior` : 'Primera carga registrada';
+  }
+
+  // Fill edit form fields
+  document.getElementById('e-date').value = e.date;
+  document.getElementById('e-odometer').value = e.odometer;
+  document.getElementById('e-price-per-liter').value = e.pricePerLiter.toFixed(2);
+  document.getElementById('e-total-cost').value = e.totalCost.toFixed(2);
+  document.getElementById('e-liters').value = e.liters.toFixed(2);
+  document.getElementById('e-toggle-full').className = 'toggle' + (e.fullTank ? ' on' : '');
+  document.getElementById('e-station').value = e.station || '';
+  document.getElementById('e-fueltype').value = e.fuelType || 'Regular';
+  document.getElementById('e-notes').value = e.notes || '';
+
+  // Currency badges
+  document.getElementById('e-badge-ppl').textContent = c + '/L';
+  document.getElementById('e-badge-cost').textContent = c;
+
+  // Clear auto-fill states
+  ['e-price-per-liter','e-total-cost','e-liters'].forEach(id => document.getElementById(id).classList.remove('auto-filled'));
+  ['e-hint-ppl','e-hint-total','e-hint-liters'].forEach(id => document.getElementById(id).classList.remove('show'));
+
+  // Delete button
+  document.getElementById('detail-delete-btn').onclick = () => {
+    const btn = document.getElementById('detail-delete-btn');
+    if (btn.dataset.confirm === '1') {
+      deleteEntry(idx);
+    } else {
+      btn.dataset.confirm = '1';
+      btn.textContent = '⚠️ Toca de nuevo para confirmar';
+      btn.style.background = 'var(--accent-dim)'; btn.style.color = 'var(--accent)';
+      setTimeout(() => { btn.dataset.confirm = '0'; btn.textContent = '🗑️ Eliminar este registro'; btn.style.background = ''; }, 3000);
+    }
+  };
+
+  document.getElementById('modal-detail').classList.add('open');
+}
+
+function autoCalcEdit(field) {
+  if (field) {
+    const idMap = { ppl: 'e-price-per-liter', total: 'e-total-cost', liters: 'e-liters' };
+    const raw = document.getElementById(idMap[field]).value;
+    if (raw === '') editManualFields.delete(field);
+    else editManualFields.add(field);
+  }
+
+  const pplRaw    = editManualFields.has('ppl')    ? parseFloat(document.getElementById('e-price-per-liter').value) : NaN;
+  const totalRaw  = editManualFields.has('total')  ? parseFloat(document.getElementById('e-total-cost').value)      : NaN;
+  const litersRaw = editManualFields.has('liters') ? parseFloat(document.getElementById('e-liters').value)          : NaN;
+
+  const hasPpl    = !isNaN(pplRaw)    && pplRaw    > 0;
+  const hasTotal  = !isNaN(totalRaw)  && totalRaw  > 0;
+  const hasLiters = !isNaN(litersRaw) && litersRaw > 0;
+
+  ['e-price-per-liter','e-total-cost','e-liters'].forEach(id => document.getElementById(id).classList.remove('auto-filled'));
+  ['e-hint-ppl','e-hint-total','e-hint-liters'].forEach(id => document.getElementById(id).classList.remove('show'));
+
+  if (hasPpl && hasTotal && !hasLiters) {
+    const calc = (totalRaw / pplRaw).toFixed(2);
+    document.getElementById('e-liters').value = calc;
+    document.getElementById('e-liters').classList.add('auto-filled');
+    document.getElementById('e-hint-liters').classList.add('show');
+    document.getElementById('e-hint-liters').textContent = `= ${totalRaw} ÷ ${pplRaw}`;
+  } else if (hasPpl && hasLiters && !hasTotal) {
+    const calc = (pplRaw * litersRaw).toFixed(2);
+    document.getElementById('e-total-cost').value = calc;
+    document.getElementById('e-total-cost').classList.add('auto-filled');
+    document.getElementById('e-hint-total').classList.add('show');
+    document.getElementById('e-hint-total').textContent = `= ${pplRaw} × ${litersRaw}`;
+  } else if (hasTotal && hasLiters && !hasPpl) {
+    const calc = (totalRaw / litersRaw).toFixed(2);
+    document.getElementById('e-price-per-liter').value = calc;
+    document.getElementById('e-price-per-liter').classList.add('auto-filled');
+    document.getElementById('e-hint-ppl').classList.add('show');
+    document.getElementById('e-hint-ppl').textContent = `= ${totalRaw} ÷ ${litersRaw}`;
+  }
+}
+
+function saveEdit() {
+  const date     = document.getElementById('e-date').value;
+  const odometer = parseFloat(document.getElementById('e-odometer').value);
+  const ppl      = parseFloat(document.getElementById('e-price-per-liter').value);
+  const total    = parseFloat(document.getElementById('e-total-cost').value);
+  const liters   = parseFloat(document.getElementById('e-liters').value);
+
+  if (!date || !odometer || !liters || !total) {
+    alert('Por favor completa: Fecha, Odómetro, Litros y Total pagado.');
+    return;
+  }
+
+  saves[editIdx] = {
+    ...saves[editIdx],
+    date,
+    odometer,
+    pricePerLiter: isNaN(ppl) ? (total / liters) : ppl,
+    totalCost: total,
+    liters,
+    fullTank: document.getElementById('e-toggle-full').classList.contains('on'),
+    station:  document.getElementById('e-station').value,
+    fuelType: document.getElementById('e-fueltype').value,
+    notes:    document.getElementById('e-notes').value,
+  };
+
+  saves.sort((a,b) => new Date(a.date) - new Date(b.date));
+  persistFills();
+  closeDetailModal();
+  refreshAll();
+  showToast('✏️ Entrada actualizada');
+  editManualFields.clear();
+}
+
+// ---- REFRESH ALL ----
+function refreshAll() {
+  updateDashboard();
+  updateHistory();
+  updateStats();
+}
+
+function getConsumptions() {
+  // Returns array of L/100km between consecutive full-tank entries
+  const consumptions = [];
+  for (let i = 1; i < saves.length; i++) {
+    const curr = saves[i];
+    const prev = saves[i - 1];
+    const km = curr.odometer - prev.odometer;
+    if (km > 0 && curr.fullTank) {
+      consumptions.push({ val: (curr.liters / km * 100), date: curr.date });
+    }
+  }
+  return consumptions;
+}
+
+function updateDashboard() {
+  const c = settings.currency || '₡';
+  const totalLiters = saves.reduce((s, e) => s + e.liters, 0);
+  const totalCost = saves.reduce((s, e) => s + e.totalCost, 0);
+  const maxOdo = saves.length ? Math.max(...saves.map(e => e.odometer)) : 0;
+  const minOdo = saves.length ? Math.min(...saves.map(e => e.odometer)) : 0;
+  const totalKm = maxOdo - minOdo;
+
+  document.getElementById('total-liters').textContent = totalLiters.toFixed(1);
+  document.getElementById('total-cost').textContent = c + formatNum(totalCost);
+  document.getElementById('total-km').textContent = totalKm.toLocaleString();
+  document.getElementById('total-fills').textContent = saves.length;
+
+  // Km per day — from fixed start date May 31 2024 to last entry date
+  if (saves.length >= 1) {
+    const startDate = new Date('2024-05-31');
+    const lastDate  = new Date(saves[saves.length - 1].date);
+    const days = Math.max((lastDate - startDate) / (1000 * 60 * 60 * 24), 1);
+    const kmPerDay = totalKm / days;
+    document.getElementById('km-per-day').textContent = kmPerDay.toFixed(1);
+    const totalDays = Math.round(days);
+    document.getElementById('km-per-day-sub').textContent = `desde 31 May 2024 · ${totalDays} día${totalDays !== 1 ? 's' : ''}`;
+  } else {
+    document.getElementById('km-per-day').textContent = '—';
+    document.getElementById('km-per-day-sub').textContent = 'desde 31 May 2024';
+  }
+
+  // Avg consumption
+  const cons = getConsumptions();
+  if (cons.length > 0) {
+    const avg = cons.reduce((s, c) => s + c.val, 0) / cons.length;
+    document.getElementById('avg-consumption').textContent = avg.toFixed(1);
+    document.getElementById('avg-sub').textContent = `Calculado con ${cons.length} registro${cons.length>1?'s':''} de tanque lleno`;
+  } else {
+    document.getElementById('avg-consumption').textContent = '—';
+    document.getElementById('avg-sub').textContent = saves.length < 2 ? 'Agrega al menos 2 registros para calcular' : 'Marca "Tanque lleno" para calcular consumo';
+  }
+
+  // Mini chart
+  // Build km-between-fills data from last 10 entries that have a previous entry
+  const last10 = saves.slice(-10);
+  const kmData = [];
+  for (let i = 0; i < last10.length; i++) {
+    const globalIdx = saves.length - last10.length + i;
+    if (globalIdx > 0) {
+      const km = last10[i].odometer - saves[globalIdx - 1].odometer;
+      if (km > 0) kmData.push({ km, date: last10[i].date });
+    }
+  }
+  const chartEl = document.getElementById('mini-chart');
+  if (kmData.length === 0) {
+    chartEl.innerHTML = '<div style="color:var(--muted);font-size:12px;width:100%;text-align:center;padding-top:20px;">Sin datos — necesitas al menos 2 cargas</div>';
+  } else {
+    const maxKm = Math.max(...kmData.map(d => d.km));
+    chartEl.innerHTML = kmData.map((d, i) => {
+      const pct = Math.max((d.km / maxKm * 100), 6);
+      const color = i % 2 === 0 ? 'var(--ink)' : 'var(--accent)';
+      return `<div class="bar-wrap">
+        <div style="font-size:8px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:2px;">${d.km}</div>
+        <div class="bar" style="height:${pct}%;background:${color};opacity:${i%2===0?0.25:0.7};border-radius:3px 3px 0 0;" title="${d.km} km"></div>
+        <div class="bar-lbl">${d.date.slice(5)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Recent list
+  const recent = saves.slice(-3).reverse();
+  const recEl = document.getElementById('recent-list');
+  recEl.innerHTML = recent.map((e, i) => {
+    const actualIdx = saves.length - 1 - i;
+    return fillCard(e, actualIdx);
+  }).join('');
+
+  // Monthly cost chart — last 10 months
+  const monthMap = {};
+  saves.forEach(e => {
+    const key = e.date.slice(0, 7); // YYYY-MM
+    monthMap[key] = (monthMap[key] || 0) + e.totalCost;
+  });
+  const allMonths = Object.keys(monthMap).sort();
+  const last10Months = allMonths.slice(-8);
+  const monthlyEl = document.getElementById('monthly-chart');
+  const cur = settings.currency || '₡';
+
+  if (last10Months.length === 0) {
+    monthlyEl.innerHTML = '<div style="color:var(--muted);font-size:12px;width:100%;text-align:center;padding-top:30px;">Sin datos</div>';
+    document.getElementById('monthly-total').textContent = '—';
+    document.getElementById('monthly-avg').textContent = '—';
+  } else {
+    const vals = last10Months.map(m => monthMap[m]);
+    const maxVal = Math.max(...vals);
+    const totalLast10 = vals.reduce((a,b) => a+b, 0);
+    const avgLast10 = totalLast10 / vals.length;
+    const monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+    document.getElementById('monthly-total').textContent = cur + formatNum(totalLast10);
+    document.getElementById('monthly-avg').textContent = cur + formatNum(avgLast10);
+    document.getElementById('monthly-label').textContent = last10Months.length < 8 ? 'últimos ' + last10Months.length + ' meses' : 'últimos 8 meses';
+
+    monthlyEl.innerHTML = last10Months.map((m, i) => {
+      const val = vals[i];
+      const pct = Math.max((val / maxVal * 100), 5);
+      const isMax = val === maxVal;
+      const [y, mo] = m.split('-');
+      const label = monthNames[parseInt(mo) - 1] + ' ' + y.slice(2);
+      return `<div class="bar-wrap" style="gap:3px;">
+        <div style="font-size:8px;color:${isMax ? 'var(--accent)' : 'var(--muted)'};font-family:'JetBrains Mono',monospace;writing-mode:horizontal-tb;margin-bottom:1px;">${cur}${formatNum(val)}</div>
+        <div class="bar" style="height:${pct}%;background:${isMax ? 'var(--accent)' : 'var(--ink)'};opacity:${isMax ? 1 : 0.75};border-radius:4px 4px 0 0;" title="${cur}${formatNum(val)}"></div>
+        <div class="bar-lbl" style="font-size:8px;">${label}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function updateHistory() {
+  const histEl = document.getElementById('history-list');
+  if (saves.length === 0) {
+    histEl.innerHTML = '<div class="empty-state"><div class="e-icon">⛽</div><p>Aún no tienes registros.<br>Presiona <strong>+</strong> para agregar tu primera carga.</p></div>';
+    return;
+  }
+  histEl.innerHTML = [...saves].reverse().map((e, i) => {
+    const actualIdx = saves.length - 1 - i;
+    return fillCard(e, actualIdx);
+  }).join('');
+}
+
+function fillCard(e, idx) {
+  const c = settings.currency || '₡';
+  return `<div class="fill-entry" onclick="showDetail(${idx})">
+    <div class="fill-icon">${e.fullTank ? '🔋' : '⛽'}</div>
+    <div class="fill-info">
+      <div class="fill-date">${formatDate(e.date)} · ${e.fuelType}</div>
+      <div class="fill-main">${e.liters.toFixed(2)} L</div>
+      <div class="fill-detail">Odómetro: ${e.odometer.toLocaleString()} km${e.station ? ' · ' + e.station : ''}</div>
+    </div>
+    <div class="fill-cost">
+      <div class="amount">${c}${formatNum(e.totalCost)}</div>
+      <div class="per-liter">${c}${e.pricePerLiter.toFixed(2)}/L</div>
+    </div>
+  </div>`;
+}
+
+function updateStats() {
+  const c = settings.currency || '₡';
+  const cons = getConsumptions();
+  if (cons.length > 0) {
+    const vals = cons.map(c => c.val);
+    document.getElementById('best-consumption').textContent = Math.min(...vals).toFixed(1) + ' L/100km';
+    document.getElementById('worst-consumption').textContent = Math.max(...vals).toFixed(1) + ' L/100km';
+  } else {
+    document.getElementById('best-consumption').textContent = '—';
+    document.getElementById('worst-consumption').textContent = '—';
+  }
+
+  if (saves.length > 0) {
+    const avgL = saves.reduce((s,e) => s+e.liters, 0) / saves.length;
+    const avgCost = saves.reduce((s,e) => s+e.totalCost, 0) / saves.length;
+    const avgPpl = saves.reduce((s,e) => s+e.pricePerLiter, 0) / saves.length;
+    document.getElementById('avg-per-fill').textContent = avgL.toFixed(1) + ' L';
+    document.getElementById('avg-cost-fill').textContent = c + formatNum(avgCost);
+    document.getElementById('avg-price-liter').textContent = c + avgPpl.toFixed(2) + '/L';
+
+    if (saves.length >= 2) {
+      const totalKm = saves[saves.length-1].odometer - saves[0].odometer;
+      const avgKm = totalKm / (saves.length - 1);
+      document.getElementById('avg-km-fill').textContent = avgKm.toFixed(0) + ' km';
+
+      const totalCost = saves.reduce((s,e) => s+e.totalCost, 0);
+      document.getElementById('cost-per-km').textContent = c + (totalCost / totalKm).toFixed(1) + '/km';
+    } else {
+      document.getElementById('avg-km-fill').textContent = '—';
+      document.getElementById('cost-per-km').textContent = '—';
+    }
+  } else {
+    ['avg-per-fill','avg-cost-fill','avg-price-liter','avg-km-fill','cost-per-km'].forEach(id => {
+      document.getElementById(id).textContent = '—';
+    });
+  }
+}
+
+// ---- HELPERS ----
+function formatDate(d) {
+  if (!d) return '';
+  const [y, m, day] = d.split('-');
+  const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return `${parseInt(day)} ${months[parseInt(m)-1]} ${y}`;
+}
+
+function formatNum(n) {
+  if (n === null || n === undefined || isNaN(n)) return '0';
+  return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+// ---- EXPORT / IMPORT ----
+function openExportModal() {
+  if (saves.length === 0) { showToast('⚠️ No hay datos para exportar'); return; }
+  const json = JSON.stringify({ saves, settings }, null, 2);
+  const c = settings.currency || '₡';
+  const totalCost = saves.reduce((s, e) => s + e.totalCost, 0);
+  const firstDate = saves[0]?.date || '';
+  const lastDate  = saves[saves.length - 1]?.date || '';
+  document.getElementById('export-summary').innerHTML =
+    `<span style="color:var(--accent)">${saves.length} registros</span> · ${firstDate} → ${lastDate} · <span style="color:var(--accent3)">${c}${formatNum(totalCost)}</span> total`;
+  document.getElementById('export-textarea').value = json;
+  document.getElementById('export-btn-copy').textContent = '📋 Copiar';
+  document.getElementById('modal-export').classList.add('open');
+}
+
+function closeExportModal() {
+  document.getElementById('modal-export').classList.remove('open');
+}
+
+function exportCopy() {
+  const json = document.getElementById('export-textarea').value;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(json).then(() => {
+      document.getElementById('export-btn-copy').textContent = '✅ Copiado!';
+      setTimeout(() => { document.getElementById('export-btn-copy').textContent = '📋 Copiar'; }, 2000);
+    }).catch(() => exportSelectAll());
+  } else {
+    exportSelectAll();
+  }
+}
+
+function exportSelectAll() {
+  const ta = document.getElementById('export-textarea');
+  ta.focus();
+  ta.select();
+  showToast('Selecciona todo → copia (Ctrl+C / Cmd+C)');
+}
+
+function openImportModal() {
+  document.getElementById('import-textarea').value = '';
+  document.getElementById('import-preview').textContent = '';
+  document.getElementById('import-status').style.display = 'none';
+  const btn = document.getElementById('import-confirm-btn');
+  btn.disabled = true; btn.style.opacity = '0.4'; btn.style.cursor = 'not-allowed';
+  document.getElementById('modal-import').classList.add('open');
+  setTimeout(() => document.getElementById('import-textarea').focus(), 300);
+}
+
+function closeImportModal() {
+  document.getElementById('modal-import').classList.remove('open');
+}
+
+function importPreview() {
+  const text = document.getElementById('import-textarea').value.trim();
+  const preview = document.getElementById('import-preview');
+  const status = document.getElementById('import-status');
+  const btn = document.getElementById('import-confirm-btn');
+
+  if (!text) {
+    preview.textContent = '';
+    status.style.display = 'none';
+    btn.disabled = true; btn.style.opacity = '0.4'; btn.style.cursor = 'not-allowed';
+    return;
+  }
+
+  try {
+    const data = JSON.parse(text);
+    const count = data.saves?.length || 0;
+    const carName = data.settings?.carName || '';
+    const first = data.saves?.[0]?.date || '';
+    const last = data.saves?.[data.saves.length-1]?.date || '';
+    preview.innerHTML = `✓ ${count} registros · ${carName} · ${first} → ${last}`;
+    preview.style.color = 'var(--green)';
+    status.style.display = 'none';
+    if (count > 0) {
+      btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
+    }
+    document.getElementById('import-textarea').style.borderColor = 'var(--green)';
+  } catch(e) {
+    preview.textContent = '✗ JSON inválido — verifica que copiaste el contenido completo';
+    preview.style.color = 'var(--accent)';
+    btn.disabled = true; btn.style.opacity = '0.4'; btn.style.cursor = 'not-allowed';
+    document.getElementById('import-textarea').style.borderColor = 'var(--accent)';
+  }
+}
+
+function doImport() {
+  const text = document.getElementById('import-textarea').value.trim();
+  try {
+    const data = JSON.parse(text);
+    if (data.saves && Array.isArray(data.saves)) {
+      saves = data.saves.sort((a,b) => new Date(a.date) - new Date(b.date));
+      persistFills();
+    }
+    if (data.settings) {
+      settings = { ...settings, ...data.settings };
+      persistSettings();
+      applySettings();
+    }
+    refreshAll();
+    closeImportModal();
+    showToast('✅ ' + saves.length + ' registros importados');
+  } catch(err) {
+    const status = document.getElementById('import-status');
+    status.textContent = 'Error: ' + (err.message || 'JSON inválido');
+    status.style.display = 'block';
+    status.style.background = 'var(--accent-dim)';
+    status.style.color = 'var(--accent)';
+  }
+}
+
+// ---- CONFIRM DELETE ALL ----
+function confirmDeleteAll() {
+  const btn = document.getElementById('btn-delete-all');
+  if (btn.dataset.confirm === '1') {
+    saves = [];
+    persistFills();
+    refreshAll();
+    showToast('🗑️ Todos los registros eliminados');
+    btn.dataset.confirm = '0';
+    btn.textContent = '🗑️ Borrar todos los registros';
+    btn.style.background = '';
+  } else {
+    btn.dataset.confirm = '1';
+    btn.textContent = '⚠️ Toca de nuevo para confirmar';
+    btn.style.background = 'var(--accent-dim)'; btn.style.color = 'var(--accent)';
+    setTimeout(() => {
+      btn.dataset.confirm = '0';
+      btn.textContent = '🗑️ Borrar todos los registros';
+      btn.style.background = '';
+    }, 3000);
+  }
+}
+
+// ---- INIT ----
+loadData();
+</script>
+</body>
+</html>
